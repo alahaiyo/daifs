@@ -23,32 +23,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <assert.h>
+#include "daifs.h"
 
-#define MAX_INODE_NUMBER 128-1
-#define MAX_INODE_PAGE   4
-#define INODE_SIZE       64
-#define SUPER_BLOCK_SIZE 64
 #define PAGE_SIZE        2048
-
-#define NORMAL_FILE     1
-#define DIRECTORY_FILE  2
-
-struct daifs_super_block {
-	unsigned int s_word0;
-	unsigned int s_word1;
-	unsigned int s_size;
-	unsigned int s_checksum;
-	char s_name[48];
-};
-
-struct daifs_inode {
-	unsigned int i_mode;
-	unsigned int i_offset;
-	unsigned int i_length;
-	unsigned int i_num;
-	unsigned int i_father_num;	
-	char i_name[44];
-};
 
 int fd_img;    /*输出文件句柄*/
 static int error;
@@ -244,8 +221,8 @@ int fill_super_blcok()
 	
 	memset(t_sb.s_name, 0, sizeof(t_sb.s_name));
 	
-	t_sb.s_word0 = 0x2d246169;
-	t_sb.s_word1 = 0x2d66732d;
+	t_sb.s_word0 = DAIFS_MAGIC;
+	t_sb.s_word1 = DAIFS_MAGIC;
 	sprintf(t_sb.s_name, "%s", "daikunhai");
 	
 	ret = pwrite(fd_img, &t_sb, SUPER_BLOCK_SIZE, 0);
