@@ -34,9 +34,6 @@ static const struct address_space_operations daifs_aops;
 
 #define DAIFS_MTD_READ(sb, ...) ((sb)->s_mtd->read((sb)->s_mtd, ##__VA_ARGS__))
 
-#define HEADER_DATA_LEN 1024 * 8
-#define DAIFS_MAGIC     0xda1f5
-
 struct daifs_inode *daifs_inode_table;
 
 static struct inode *get_daifs_inode(struct super_block *sb,
@@ -136,7 +133,9 @@ static int daifs_remount(struct super_block *sb, int *flags, char *data)
 	return 0;
 }
 
-
+/*
+* 读指定目录下的目录项
+ */
 static int daifs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 {
 	struct inode *inode = filp->f_dentry->d_inode;
@@ -181,6 +180,9 @@ static int daifs_readdir(struct file *filp, void *dirent, filldir_t filldir)
 	return 0;
 }
 
+/*
+* 从指定目录找到指定文件的inode
+ */
 static struct dentry * daifs_lookup(struct inode *dir, struct dentry *dentry, struct nameidata *nd)
 {
 	struct daifs_inode *dir_inode;
@@ -219,8 +221,8 @@ FOUND:
 NOT_FOUND:
 	if (IS_ERR(inode))
 		return ERR_CAST(inode);
-	d_add(dentry, inode);
-
+	d_add(dentry, inode); //这里dentry目录项是VFS中的概念，daifs中没有，通过获取inode，
+                             //使用d_add来初始化dentry，并添加到内核中去
 	return NULL;
 }
 
@@ -337,7 +339,13 @@ static int romfs_fill_super(struct super_block *sb, void *data, int silent)
 
 	daifs_inode_table = (struct daifs_inode*)(header_data + SUPER_BLOCK_SIZE);
 	dai_sb = (struct daifs_super_block *)header_data;
-
+	if(dai_sb->s_word0 != DAIFS_MAGIC || dai_sb->s_word1 != DAIFS_MAGIC) {
+		printk("%x, %x\n", dai_sb->s_word0, dai_sb->s_word1);
+		printk("Worng daifs magic!!!\n");
+		ret = -EINVAL;
+		goto error_rmtd;
+	}
+	
 	sb->s_fs_info = (void *)header_data;
 
 	printk("Filesystem name : daifs\r\n");
