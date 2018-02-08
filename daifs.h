@@ -11,6 +11,9 @@
 #define NORMAL_FILE     1
 #define DIRECTORY_FILE  2
 
+#define HEADER_DATA_LEN 1024 * 8
+#define DAIFS_MAGIC     0xda1f5
+
 struct daifs_super_block {
 	unsigned int s_word0;
 	unsigned int s_word1;
